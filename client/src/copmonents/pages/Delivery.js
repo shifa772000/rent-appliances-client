@@ -11,6 +11,8 @@ import { useTranslation } from 'react-i18next';
 
 
 
+
+
 // Main Delivery component for handling delivery information, form validation, and order tracking
 const Delivery = () => {
   const { t } = useTranslation();
@@ -23,6 +25,7 @@ const Delivery = () => {
   const [currentStep, setCurrentStep] = useState(1); // Tracks current step in delivery timeline (1-5)
   const [progress, setProgress] = useState(0); // Tracks overall progress percentage (0-100%)
   const [userEmail, setUserEmail] = useState(''); // User email for order
+
   const [locationn, setLocation] = useState({
   lat: 23.588, lng: 58.382
 });
@@ -480,6 +483,7 @@ const Delivery = () => {
 
 
 
+
               <div className="form-group">
   <label className="form-label">Locate yourself on the map :</label> <br/>
   <iframe
@@ -504,6 +508,7 @@ const Delivery = () => {
     Allow your location to be determined📍
   </button>
 </div>
+
 
 
 
