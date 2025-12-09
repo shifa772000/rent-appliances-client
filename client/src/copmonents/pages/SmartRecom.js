@@ -18,6 +18,7 @@ const SmartRecom = () => {
     const [submitted, setSubmitted] = useState(false);
     const { darkMode } = useContext(DarkModeContext);
     const navigate = useNavigate();
+    const [applianceName, setApplianceName] = useState('');
 
     // Translation mapping for appliance names and details (same as AppliancesCatalog)
     const getApplianceTranslation = (appliance) => {
@@ -101,11 +102,11 @@ const SmartRecom = () => {
 
     // Recommendation logic
     const getRecommendations = () => {
-        if (!budget) {
+        if (!budget && !applianceName) {
             return [];
         }
 
-        const budgetAmount = parseInt(budget);
+        const budgetAmount = parseInt(budget)|| Infinity;
 
         // Filter appliances within budget
         let filtered = appliances.filter(appliance => {
@@ -113,10 +114,27 @@ const SmartRecom = () => {
             return price <= budgetAmount && appliance.available;
         });
 
+
+        if (applianceName) {
+        const searchName = applianceName.toLowerCase().trim();
+        filtered = filtered.filter(appliance => {
+            const translatedName = getApplianceTranslation(appliance).name.toLowerCase();
+            const originalName = appliance.name.toLowerCase();
+            
+            // تحقق من الاسم الأصلي أو الاسم المترجم
+            return originalName.includes(searchName) || translatedName.includes(searchName);
+        });
+    }
+
+
+
+
+
+
         // Score appliances based on budget and importance
         const scoredAppliances = filtered.map(appliance => {
             let score = 0;
-            const applianceName = appliance.name.toLowerCase();
+            const applianceLowerName = appliance.name.toLowerCase();
             const price = parseInt(appliance.price) || 0;
 
             // Essential appliances always get a boost
@@ -255,6 +273,26 @@ const SmartRecom = () => {
                                     />
                                 </FormGroup>
                             </Col>
+                            
+    <Col md={6} lg={4}>
+        <FormGroup>
+            <Label htmlFor="applianceName" style={{ fontWeight: 'bold', color: darkMode ? '#fff' : '#333', marginBottom: '10px' }}>
+                <i className="bi bi-tags-fill me-2"></i> {/* أيقونة مناسبة */}
+                {t('Appliance Name')}
+            </Label>
+            <Input
+                type="text"
+                id="applianceName"
+                value={applianceName}
+                onChange={(e) => setApplianceName(e.target.value)}
+                placeholder={t('Enter Appliance Name ')}
+                className={darkMode ? 'bg-dark text-light border-secondary' : ''}
+                style={{ fontSize: '18px', padding: '12px' }}
+            />
+        </FormGroup>
+    </Col>
+
+
                         </Row>
                         <div style={{ textAlign: 'center', marginTop: '20px' }}>
                             <Button
