@@ -1,0 +1,284 @@
+import React, { useEffect, useState } from 'react';
+import "../css/Admin.css";
+import admin from "../assets/admin.png";
+import axios from "axios";
+import { Modal, ModalHeader, ModalBody, Button, Row, Col, Card, CardBody, CardImg, CardTitle, CardText, Spinner, Input, InputGroup, InputGroupText } from "reactstrap";
+import { useNavigate } from 'react-router-dom';
+
+const DeleteAppliances = () => {
+  // State for listing and deleting appliances
+  const [appliances, setAppliances] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showDialog, setShowDialog] = useState(false);
+  const [dialogMessage, setDialogMessage] = useState("");
+  const [confirmId, setConfirmId] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [searchSuggestions, setSearchSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+  // Fetching user profile and users list from the Redux store
+  const Profiler = 'https://static.vecteezy.com/system/resources/thumbnails/013/360/247/small/default-avatar-photo-icon-social-media-profile-sign-symbol-vector.jpg';
+  const user = { gender: 'Female', user: 'Admin' };
+  const dfimg = 'https://static.vecteezy.com/system/resources/thumbnails/013/360/247/small/default-avatar-photo-icon-social-media-profile-sign-symbol-vector.jpg';
+  const users = [];
+  console.log(user);
+  
+  const navigate = useNavigate();
+  
+  // Fetch appliances on mount
+  useEffect(() => {
+    axios.get('http://localhost:5000/getSpecificAppliance')
+      .then((res) => {
+        setAppliances(res.data.Appliance || []);
+        setLoading(false);
+      })
+      .catch((error) => {
+        console.error('Error fetching appliances:', error);
+        setDialogMessage('Failed to load appliances');
+        setShowDialog(true);
+        setLoading(false);
+      });
+  }, []);
+
+  // Generate autocomplete suggestions
+  useEffect(() => {
+    if (searchTerm.trim() === '') {
+      setSearchSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+    
+    const filtered = appliances
+      .filter(a => a.name?.toLowerCase().includes(searchTerm.toLowerCase()))
+      .slice(0, 5)
+      .map(a => a.name);
+    
+    // Remove duplicates
+    const unique = [...new Set(filtered)];
+    
+    setSearchSuggestions(unique);
+    setShowSuggestions(unique.length > 0);
+  }, [searchTerm, appliances]);
+
+  // Delete appliance by id
+  const confirmDelete = (id) => {
+    setConfirmId(id);
+    // Fallback: if modal doesn't show (CSS/Bootstrap not loaded), use native confirm
+    setTimeout(() => {
+      const modalVisible = !!document.querySelector('.modal.show');
+      if (!modalVisible) {
+        if (window.confirm('Are you sure you want to delete this appliance?')) {
+          handleImmediateDelete(id);
+        }
+      }
+    }, 50);
+  };
+  const cancelDelete = () => setConfirmId(null);
+  const handleDelete = () => {
+    if (!confirmId) return;
+    axios.delete(`http://localhost:5000/appliances/${confirmId}`)
+      .then((res) => {
+        setAppliances((prev) => prev.filter(a => a._id !== confirmId));
+        setDialogMessage(res.data?.message || 'Appliance deleted successfully');
+        setShowDialog(true);
+        // Notify other pages (e.g., Home catalog) about the deletion
+        try {
+          window.dispatchEvent(new CustomEvent('appliance:deleted', { detail: { id: confirmId } }));
+          window.dispatchEvent(new Event('appliance:refresh'));
+        } catch (_) {}
+        setConfirmId(null);
+        // Navigate to home to ensure fresh fetch
+        navigate('/home');
+      })
+      .catch((error) => {
+        console.error('Error deleting appliance:', error?.response?.data || error);
+        setDialogMessage(error?.response?.data?.message || 'Failed to delete appliance');
+        setShowDialog(true);
+        setConfirmId(null);
+      });
+  };
+
+  // Immediate delete without modal (useful if modal isn't showing for you)
+  const handleImmediateDelete = (id) => {
+    if (!id) return;
+    axios.delete(`http://localhost:5000/appliances/${id}`)
+      .then((res) => {
+        setAppliances((prev) => prev.filter(a => a._id !== id));
+        setDialogMessage(res.data?.message || 'Appliance deleted successfully');
+        setShowDialog(true);
+        try {
+          window.dispatchEvent(new CustomEvent('appliance:deleted', { detail: { id } }));
+          window.dispatchEvent(new Event('appliance:refresh'));
+        } catch (_) {}
+      })
+      .catch((error) => {
+        console.error('Error deleting appliance:', error?.response?.data || error);
+        setDialogMessage(error?.response?.data?.message || 'Failed to delete appliance');
+        setShowDialog(true);
+      });
+  };
+
+  const handleSignOut = () => {
+    navigate('/'); 
+  };
+
+  const handleAddAppliances = () => {
+    navigate('/admin')
+  };
+
+  const handleDeleteAppliances = () => {
+    navigate('/delete-appliances')
+  };
+
+  const handleUpdateAppliances = () => {
+    navigate('/update-appliances')
+  };
+
+  const handleCustomerControl = () => {
+    navigate('/customer-control')
+  };
+
+  const handleCustomerFeedback = () => {
+    navigate('/customer-feedback')
+  };
+
+  const handleCustomerChat = () => {
+    navigate('/customer-chat')
+  };
+
+  return (
+    <div className="admin-panel">
+      <div className="sidebar">
+        <div className="profile text-center mb-4">
+          <img src={Profiler ? Profiler : dfimg} alt="Profile" className="rounded-circle mb-2" />
+          <p className="user-role">Admin</p>
+          <p>{user.gender =='Male'? 'Mr.':'Ms.'} {user.user}</p>
+         <br/>
+         &nbsp;
+         <br/>
+        </div>
+        <ul className="menu">
+          <li onClick={handleAddAppliances} className="menu-item bi bi-list-task">&nbsp;Add Appliance</li>
+          <li onClick={handleDeleteAppliances} className="menu-item bi bi-trash">&nbsp;Delete Appliance</li>
+          <li onClick={handleUpdateAppliances} className="menu-item bi bi-pencil-square">&nbsp;Update Appliance</li>
+          <li onClick={handleCustomerControl} className="menu-item bi bi-person-lines-fill">&nbsp; Customer Control</li>
+          <li onClick={handleCustomerFeedback} className="menu-item bi bi-person-lines-fill">&nbsp; Customer Feedback</li>
+          <li onClick={handleCustomerChat} className="menu-item bi bi-person-lines-fill">&nbsp; Customer Chat</li>
+        </ul>
+        <ul className="menu fixed-bottom p-4">
+          <li onClick={handleSignOut} className="menu-item bi bi-box-arrow-right">&nbsp;Sign Out</li>
+        </ul>
+      </div>
+      <br/>
+      &nbsp;
+      &nbsp;
+      &nbsp;
+      <div className="container-admin">
+        <div className="left-section-admin" style={{ width: '100%' }}>
+          <h2>Delete Appliances</h2>
+          <div style={{ position: 'relative' }}>
+            <InputGroup className="mb-3">
+              <Input 
+                type="text" 
+                placeholder="Search by name..." 
+                value={searchTerm} 
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setShowSuggestions(true);
+                }}
+                onFocus={() => {
+                  if (searchSuggestions.length > 0) {
+                    setShowSuggestions(true);
+                  }
+                }}
+                onBlur={() => {
+                  setTimeout(() => setShowSuggestions(false), 200);
+                }}
+                autoComplete="off"
+              />
+              <InputGroupText className="bi bi-search" />
+            </InputGroup>
+            
+            {/* Autocomplete Suggestions */}
+            {showSuggestions && searchSuggestions.length > 0 && (
+              <ul style={{
+                position: 'absolute',
+                top: '100%',
+                left: 0,
+                right: 0,
+                zIndex: 1000,
+                background: '#fff',
+                border: '1px solid #ccc',
+                borderRadius: '8px',
+                listStyle: 'none',
+                padding: 0,
+                margin: '5px 0 0 0',
+                maxHeight: '200px',
+                overflowY: 'auto',
+                boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+              }}>
+                {searchSuggestions.map((item, idx) => (
+                  <li
+                    key={idx}
+                    onClick={() => {
+                      setSearchTerm(item);
+                      setShowSuggestions(false);
+                    }}
+                    style={{
+                      padding: '12px 15px',
+                      cursor: 'pointer',
+                      borderBottom: idx < searchSuggestions.length - 1 ? '1px solid #eee' : 'none',
+                      fontSize: '14px',
+                      transition: 'background-color 0.2s',
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.background = '#f5f5f5'}
+                    onMouseLeave={e => e.currentTarget.style.background = '#fff'}
+                  >
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+          {loading ? (
+            <div className="text-center my-4"><Spinner color="primary" /></div>
+          ) : (
+            <Row xs="1" sm="2" md="3" lg="4">
+              {appliances
+                .filter(a => a.name?.toLowerCase().startsWith(searchTerm.toLowerCase()))
+                .map((appliance) => (
+                <Col key={appliance._id} className="mb-4">
+                  <Card className="shadow-sm h-100">
+                    {appliance.imgUrl ? (
+                      <CardImg top src={appliance.imgUrl} alt={appliance.name} style={{ height: '160px', objectFit: 'cover' }} />
+                    ) : null}
+                    <CardBody>
+                      <CardTitle tag="h5">{appliance.name}</CardTitle>
+                      <CardText><strong>Price:</strong> {appliance.price}</CardText>
+                      <CardText className="text-truncate" title={appliance.details}>{appliance.details}</CardText>
+                      <div className="d-flex gap-2">
+                        <Button color="danger" size="sm" onClick={() => confirmDelete(appliance._id)} className="bi bi-trash">&nbsp; Delete</Button>
+                      </div>
+                    </CardBody>
+                  </Card>
+                </Col>
+              ))}
+              {appliances.filter(a => a.name?.toLowerCase().startsWith(searchTerm.toLowerCase())).length === 0 && (
+                <Col><p className="text-center" style={{ color: 'gray' }}>No appliances found.</p></Col>
+              )}
+            </Row>
+          )}
+        </div>
+
+      </div>
+      <Modal isOpen={showDialog} toggle={() => setShowDialog(false)}>
+        <ModalHeader toggle={() => setShowDialog(false)}>Message</ModalHeader>
+        <ModalBody>
+          <p>{dialogMessage}</p>
+        </ModalBody>
+      </Modal>
+    </div>
+  );
+};
+
+export default DeleteAppliances;
