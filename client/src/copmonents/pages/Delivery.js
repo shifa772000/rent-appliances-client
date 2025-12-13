@@ -7,7 +7,6 @@ import axios from 'axios'; // For API calls
 import '../css/Delivery.css'; // CSS styles for delivery page animations, form styling, and layout
 import { useTranslation } from 'react-i18next';
 
-////////////////////////////
 
 // Main Delivery component for handling delivery information, form validation, and order tracking
 const Delivery = () => {
