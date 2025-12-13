@@ -7,15 +7,7 @@ import axios from 'axios'; // For API calls
 import '../css/Delivery.css'; // CSS styles for delivery page animations, form styling, and layout
 import { useTranslation } from 'react-i18next';
 
-<<<<<<< HEAD
 
-
-
-
-
-
-=======
->>>>>>> 64c0c9da39722af333ca06b74aa423d6d904f6c1
 // Main Delivery component for handling delivery information, form validation, and order tracking
 const Delivery = () => {
   const { t } = useTranslation();
@@ -497,11 +489,8 @@ const Delivery = () => {
 
       const orderToSave = {
         user: username,
-<<<<<<< HEAD
         email: userEmail,
-=======
         email: userInfo.email || '',
->>>>>>> ae24871f58d2ff829a02f9e095bf848144491ba7
         appliance: applianceName,
         applianceId: orderData.appliance?._id || null,
         startDate: startDate,
